@@ -1,0 +1,5 @@
+*.md
+scripts
+.data
+.env*
+.impeccable

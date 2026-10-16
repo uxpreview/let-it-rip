@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Social card</title>
+<link rel="stylesheet" href="/assets/app.css">
+<style>
+  html, body { width: 1200px; height: 630px; overflow: hidden; }
+  body { background: radial-gradient(900px 600px at 78% 50%, #1a1b29, #0f1019 55%, #0b0c14); }
+  .card { position: relative; width: 1200px; height: 630px; }
+  .copy { position: absolute; left: 72px; top: 0; bottom: 0; width: 560px; display: grid; align-content: center; gap: 26px; }
+  .copy h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 132px; line-height: 1; letter-spacing: -0.012em; }
+  .copy p { margin: 0; font-size: 34px; line-height: 1.25; color: var(--ink-2); max-width: 15em; }
+  .tags { display: flex; gap: 12px; }
+  .tags span { display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 18px 0 14px; border-radius: 999px; background: rgba(246, 235, 217, 0.07); font-size: 21px; font-weight: 700; }
+  .tags i { width: 14px; height: 14px; border-radius: 50%; }
+  .wheel { position: absolute; left: 676px; top: 52px; --size: 560px; }
+  .wheel-rays { inset: -30%; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="copy">
+    <h1>Let it rip.</h1>
+    <p>Where to after work? Spin for tonight's spot near 31&nbsp;State&nbsp;St.</p>
+    <div class="tags"><span><i style="background:#F2A93B"></i>Comfort</span><span><i style="background:#FF4F8B"></i>Adventure</span><span><i style="background:#7FD8C3"></i>Oysters</span></div>
+  </div>
+  <div class="wheel" id="wheel" data-lights="win">
+    <div class="wheel-glow"></div>
+    <div class="wheel-rays"></div>
+    <div class="frame"></div>
+    <div class="bulbs"></div>
+    <div class="disc" data-disc><svg viewBox="0 0 1000 1000"></svg></div>
+    <svg class="lens" viewBox="0 0 1000 1000">
+      <defs>
+        <radialGradient id="lensShade" cx="50%" cy="50%" r="50%"><stop offset=".25" stop-color="#05040a" stop-opacity=".5"/><stop offset=".37" stop-color="#05040a" stop-opacity="0"/><stop offset=".78" stop-color="#05040a" stop-opacity="0"/><stop offset="1" stop-color="#05040a" stop-opacity=".38"/></radialGradient>
+        <radialGradient id="lensSheen" cx="30%" cy="18%" r="75%"><stop offset="0" stop-color="#fff" stop-opacity=".26"/><stop offset=".45" stop-color="#fff" stop-opacity=".05"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+        <linearGradient id="lensRim" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFE6A8"/><stop offset=".35" stop-color="#B07A22"/><stop offset=".6" stop-color="#F3CF7E"/><stop offset="1" stop-color="#6E450F"/></linearGradient>
+      </defs>
+      <circle cx="500" cy="500" r="452" fill="url(#lensShade)"/>
+      <circle cx="500" cy="500" r="452" fill="url(#lensSheen)"/>
+      <circle cx="500" cy="500" r="455" fill="none" stroke="url(#lensRim)" stroke-width="8"/>
+    </svg>
+    <button class="hub"><span class="hub-label">Spin</span></button>
+    <div class="pointer">
+      <svg class="flapper" data-flapper viewBox="0 0 72 104">
+        <defs><linearGradient id="pinFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFE9B0"/><stop offset=".45" stop-color="#E0AE4E"/><stop offset="1" stop-color="#8A5B16"/></linearGradient></defs>
+        <path d="M36 3c17.7 0 29 12.4 29 27.4 0 17-17.3 33.5-29 69.6C24.3 63.9 7 47.4 7 30.4 7 15.4 18.3 3 36 3z" fill="url(#pinFill)" stroke="#5E3B0B" stroke-width="2.5"/>
+        <path d="M36 9c-12 0-21 8-22.5 19" fill="none" stroke="#FFF4D2" stroke-width="3" stroke-linecap="round" opacity=".7"/>
+        <circle cx="36" cy="30" r="11" fill="#F6EBD9" stroke="#5E3B0B" stroke-width="2.5"/>
+        <circle cx="36" cy="30" r="4.2" fill="#C2662F"/>
+      </svg>
+    </div>
+  </div>
+</div>
+<script type="module">
+  import { createWheel } from "/assets/wheel.js";
+  import { SPOTS } from "/data/spots.js";
+  const TONES = {
+    comfort: [["#F2A93B", "#2A1606"], ["#7B3A1F", "#FBEAD2"], ["#F6E4C4", "#3A2210"]],
+    adventure: [["#FF4F8B", "#2B0716"], ["#5B3BE0", "#FFFFFF"], ["#D9F35B", "#1E2405"]],
+    oysters: [["#7FD8C3", "#05302A"], ["#0F5257", "#E6FFF8"], ["#EEF0E8", "#0F3B3B"]],
+  };
+  const pick = ["comfort", "adventure", "oysters"].flatMap((cat) => SPOTS[cat].slice(0, 4).map((s, i) => ({ s, cat, i })));
+  const order = [];
+  for (let i = 0; i < 4; i++) for (const cat of ["comfort", "adventure", "oysters"]) order.push(pick.find((p) => p.cat === cat && p.i === i));
+  const box = document.querySelector(".bulbs");
+  box.style.setProperty("--n", 28);
+  for (let i = 0; i < 28; i++) {
+    const b = document.createElement("span");
+    b.className = "bulb";
+    b.style.setProperty("--i", i);
+    box.append(b);
+  }
+  await document.fonts.ready;
+  const wheel = createWheel(document.getElementById("wheel"));
+  const counters = { comfort: 0, adventure: 0, oysters: 0 };
+  wheel.setSlices(order.map(({ s, cat }) => {
+    const [fill, ink] = TONES[cat][counters[cat]++ % 3];
+    return { label: s.short, fill, ink };
+  }));
+  document.querySelector("[data-disc]").style.transform = "rotate(-12deg)";
+  document.body.dataset.ready = "1";
+</script>
+</body>
+</html>

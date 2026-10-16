@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "radial-halo",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-10-16T00:53:53.894Z",
+        "reason": "Claude: literal light. The only radial halo left is the glow of the lit marquee bulbs on the wheel frame; decorative washes were removed"
+      }
+    ]
+  }
+}

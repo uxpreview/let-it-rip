@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>After-Work Wheel · 31 State St</title>
+<meta name="description" content="Spin for tonight's after-work spot near 31 State St, Boston.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0B0C14">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://wheel.uxpreview.com/">
+<meta property="og:title" content="Let it rip. Where to after work?">
+<meta property="og:description" content="Spin the wheel for tonight's spot near 31 State St.">
+<meta property="og:image" content="https://wheel.uxpreview.com/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="preload" href="/assets/fonts/shrikhand.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/app.css">
+<script type="module" src="/assets/app.js"></script>
+</head>
+<body data-mode="all">
+<div class="atmos" aria-hidden="true"><div class="grain"></div></div>
+
+<header class="topbar">
+  <a class="brand" href="/" aria-label="After-Work Wheel, home">
+    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <circle cx="16" cy="17" r="13" fill="#1d1c29"/>
+      <path d="M16 17V4a13 13 0 0 1 11.3 6.5z" fill="#F2A93B"/>
+      <path d="M16 17l11.3-6.5a13 13 0 0 1 0 13z" fill="#FF4F8B"/>
+      <path d="M16 17l11.3 6.5A13 13 0 0 1 16 30z" fill="#7FD8C3"/>
+      <path d="M16 17v13a13 13 0 0 1-11.3-6.5z" fill="#7B3A1F"/>
+      <path d="M16 17L4.7 23.5a13 13 0 0 1 0-13z" fill="#5B3BE0"/>
+      <path d="M16 17L4.7 10.5A13 13 0 0 1 16 4z" fill="#EEF0E8"/>
+      <circle cx="16" cy="17" r="3.4" fill="#F6EBD9" stroke="#C99A3F" stroke-width="1.4"/>
+      <path d="M16 1.5c2.2 0 3.6 1.5 3.6 3.3 0 1.9-2 3.6-3.6 6.6-1.6-3-3.6-4.7-3.6-6.6 0-1.8 1.4-3.3 3.6-3.3z" fill="#E0AE4E" stroke="#6E450F" stroke-width=".9"/>
+    </svg>
+    <span class="brand-text"><span class="brand-name">After-Work Wheel</span><span class="brand-loc">31 State St</span></span>
+  </a>
+  <div class="top-actions">
+    <button class="icon-btn sound-btn" id="soundBtn" type="button" aria-pressed="true" aria-label="Sound is on" data-on="true">
+      <svg class="i-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.5 4.5 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/></svg>
+      <svg class="i-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
+    </button>
+    <button class="pill-btn" id="editBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="drawer">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h11M4 12h8M4 17h11M18 14v6M15 17h6"/></svg>
+      <span>Edit spots</span>
+    </button>
+  </div>
+</header>
+
+<main class="stage">
+  <div class="panel">
+    <div class="intro" id="intro">
+      <div class="intro-head">
+        <h1 class="title" id="modeTitle">Let it rip.</h1>
+        <p class="tagline" id="modeTagline">Every spot on one wheel. No take-backs.</p>
+      </div>
+
+      <div class="modes" id="modes" role="tablist" aria-label="Pick a wheel">
+        <button class="mode" type="button" role="tab" data-mode="all" aria-selected="true" aria-controls="wheel">
+          <span class="swatch" aria-hidden="true"></span>
+          <span class="mode-text"><span class="mode-name">Let it rip</span><span class="mode-meta">Every spot</span></span>
+          <span class="mode-count" aria-label="spots"></span>
+        </button>
+        <button class="mode" type="button" role="tab" data-mode="comfort" aria-selected="false" aria-controls="wheel" tabindex="-1">
+          <span class="swatch" aria-hidden="true"></span>
+          <span class="mode-text"><span class="mode-name">Comfort</span><span class="mode-meta">Familiar bars</span></span>
+          <span class="mode-count" aria-label="spots"></span>
+        </button>
+        <button class="mode" type="button" role="tab" data-mode="adventure" aria-selected="false" aria-controls="wheel" tabindex="-1">
+          <span class="swatch" aria-hidden="true"></span>
+          <span class="mode-text"><span class="mode-name">Adventure</span><span class="mode-meta">Outside our comfort zone</span></span>
+          <span class="mode-count" aria-label="spots"></span>
+        </button>
+        <button class="mode" type="button" role="tab" data-mode="oysters" aria-selected="false" aria-controls="wheel" tabindex="-1">
+          <span class="swatch" aria-hidden="true"></span>
+          <span class="mode-text"><span class="mode-name">Oysters</span><span class="mode-meta">Mostly dollar oysters</span></span>
+          <span class="mode-count" aria-label="spots"></span>
+        </button>
+      </div>
+
+      <div class="actions">
+        <button class="spin-btn" id="spinBtn" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg>
+          <span class="spin-label">Spin the wheel</span>
+        </button>
+        <p class="hint"><span class="hint-keys">Or hit <kbd>Space</kbd>. </span>Or grab the wheel and flick it.</p>
+      </div>
+    </div>
+
+    <article class="result" id="result" hidden aria-labelledby="resultName">
+      <button class="result-close" id="resultClose" type="button" aria-label="Back to the wheels">
+        <svg class="i-back" viewBox="0 0 20 20" aria-hidden="true"><path d="M12 4l-6 6 6 6"/></svg>
+        <svg class="i-x" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>
+        <span>All wheels</span>
+      </button>
+      <p class="result-kicker" id="resultKicker">The wheel has spoken:</p>
+      <h2 class="result-name" id="resultName" tabindex="-1"></h2>
+      <p class="result-meta" id="resultMeta"></p>
+      <p class="result-vibe" id="resultVibe"></p>
+      <div class="result-deal" id="resultDeal" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 13.2c0-4.6 3.9-8.7 8.9-8.7 4.4 0 8.1 3.3 8.1 7.7 0 4.8-4.2 7.8-9 7.8-4.6 0-8-2.7-8-6.8z"/><circle cx="12.6" cy="12.4" r="2.3"/></svg>
+        <div class="deal-body">
+          <p class="deal-status" data-state="off" hidden><span class="deal-dot" aria-hidden="true"></span><span class="deal-status-text"></span></p>
+          <p class="deal-text"></p>
+          <p class="deal-checked"></p>
+        </div>
+      </div>
+      <p class="result-heads" id="resultHeads" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/></svg>
+        <span class="heads-text"></span>
+      </p>
+      <div class="result-actions">
+        <a class="btn btn-accent" id="goBtn" href="#" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="13" cy="4.5" r="1.8"/><path d="M10 21l2.2-6.2L15 17v4M8.5 11.5l2.2-3.3c.5-.7 1.4-1 2.2-.6l2.4 1.2 1.7 3.2M12.2 14.8l-.9-4.8"/></svg>
+          <span>Walk there</span>
+        </a>
+        <button class="btn" id="shareBtn" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4M5 12v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>
+          <span>Share</span>
+        </button>
+      </div>
+      <p class="result-links">
+        <a id="appleLink" href="#" target="_blank" rel="noopener">Apple Maps</a>
+        <a id="siteLink" href="#" target="_blank" rel="noopener" hidden>Website</a>
+      </p>
+      <div class="result-more">
+        <button class="btn btn-ghost" id="againBtn" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg>
+          <span>Spin again</span>
+        </button>
+        <button class="btn btn-ghost" id="vetoBtn" type="button" aria-label="Veto it for tonight and spin again">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M6 6l12 12"/></svg>
+          <span>Veto it</span>
+        </button>
+      </div>
+    </article>
+  </div>
+
+  <section class="wheel-area" aria-label="The wheel">
+    <div class="wheel" id="wheel" data-lights="idle">
+      <div class="wheel-glow" aria-hidden="true"></div>
+      <div class="wheel-rays" aria-hidden="true"></div>
+      <div class="frame" aria-hidden="true"></div>
+      <div class="bulbs" aria-hidden="true"></div>
+      <div class="disc" data-disc><svg viewBox="0 0 1000 1000" aria-hidden="true"></svg></div>
+      <svg class="lens" viewBox="0 0 1000 1000" aria-hidden="true">
+        <defs>
+          <radialGradient id="lensShade" cx="50%" cy="50%" r="50%">
+            <stop offset=".25" stop-color="#05040a" stop-opacity=".5"/>
+            <stop offset=".37" stop-color="#05040a" stop-opacity="0"/>
+            <stop offset=".78" stop-color="#05040a" stop-opacity="0"/>
+            <stop offset="1" stop-color="#05040a" stop-opacity=".38"/>
+          </radialGradient>
+          <radialGradient id="lensSheen" cx="30%" cy="18%" r="75%">
+            <stop offset="0" stop-color="#fff" stop-opacity=".26"/>
+            <stop offset=".45" stop-color="#fff" stop-opacity=".05"/>
+            <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="lensRim" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#FFE6A8"/>
+            <stop offset=".35" stop-color="#B07A22"/>
+            <stop offset=".6" stop-color="#F3CF7E"/>
+            <stop offset="1" stop-color="#6E450F"/>
+          </linearGradient>
+        </defs>
+        <circle cx="500" cy="500" r="452" fill="url(#lensShade)"/>
+        <circle cx="500" cy="500" r="452" fill="url(#lensSheen)"/>
+        <circle cx="500" cy="500" r="455" fill="none" stroke="url(#lensRim)" stroke-width="8"/>
+      </svg>
+      <button class="hub" id="hubBtn" type="button" aria-label="Spin the wheel"><span class="hub-label">Spin</span></button>
+      <div class="pointer" aria-hidden="true">
+        <svg class="flapper" data-flapper viewBox="0 0 72 104">
+          <defs>
+            <linearGradient id="pinFill" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#FFE9B0"/>
+              <stop offset=".45" stop-color="#E0AE4E"/>
+              <stop offset="1" stop-color="#8A5B16"/>
+            </linearGradient>
+          </defs>
+          <path d="M36 3c17.7 0 29 12.4 29 27.4 0 17-17.3 33.5-29 69.6C24.3 63.9 7 47.4 7 30.4 7 15.4 18.3 3 36 3z" fill="url(#pinFill)" stroke="#5E3B0B" stroke-width="2.5"/>
+          <path d="M36 9c-12 0-21 8-22.5 19" fill="none" stroke="#FFF4D2" stroke-width="3" stroke-linecap="round" opacity=".7"/>
+          <circle cx="36" cy="30" r="11" fill="#F6EBD9" stroke="#5E3B0B" stroke-width="2.5"/>
+          <circle cx="36" cy="30" r="4.2" fill="#C2662F"/>
+        </svg>
+      </div>
+      <p class="wheel-empty">Everything is vetoed.<br>Bring one back below.</p>
+    </div>
+    <div class="vetoes" id="vetoes" hidden>
+      <span class="vetoes-label">Vetoed tonight</span>
+      <span class="veto-items"></span>
+      <button class="link-btn" type="button" data-clear-vetoes>Clear</button>
+    </div>
+  </section>
+</main>
+
+<div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" hidden>
+  <header class="drawer-head">
+    <h2 class="drawer-title" id="drawerTitle">Edit the wheel</h2>
+    <button class="icon-btn" id="drawerClose" type="button" aria-label="Close">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>
+    </button>
+  </header>
+  <p class="sync-note" id="syncNote" data-state="loading"><span class="sync-dot" aria-hidden="true"></span><span class="sync-text">Loading the shared list…</span></p>
+
+  <div class="drawer-tabs" id="drawerTabs" role="tablist" aria-label="Which wheel">
+    <button type="button" role="tab" data-cat="comfort" aria-controls="spotList"><span class="tab-dot" aria-hidden="true"></span>Comfort <span class="tab-count"></span></button>
+    <button type="button" role="tab" data-cat="adventure" aria-controls="spotList"><span class="tab-dot" aria-hidden="true"></span>Adventure <span class="tab-count"></span></button>
+    <button type="button" role="tab" data-cat="oysters" aria-controls="spotList"><span class="tab-dot" aria-hidden="true"></span>Oysters <span class="tab-count"></span></button>
+  </div>
+
+  <form class="add-form" id="addForm" autocomplete="off">
+    <label class="sr-only" for="addName">Spot name</label>
+    <input class="field" id="addName" name="name" maxlength="40" placeholder="Add a spot" enterkeyhint="done" required>
+    <label class="sr-only" for="addNote">Note, optional</label>
+    <input class="field field-note" id="addNote" name="note" maxlength="90" placeholder="Note, like “$1 oysters Tue 4–6” (optional)" enterkeyhint="done">
+    <button class="btn btn-accent add-btn" type="submit">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      <span>Add</span>
+    </button>
+  </form>
+
+  <ul class="spot-list" id="spotList" aria-label="Spots on this wheel"></ul>
+
+  <details class="removed" id="removedBox" hidden>
+    <summary>Recently removed (<span id="removedCount">0</span>)</summary>
+    <ul class="removed-list" id="removedList"></ul>
+  </details>
+
+  <div class="reset-area" id="resetArea"></div>
+</aside>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<p class="sr-only" id="announcer" aria-live="assertive"></p>
+<canvas class="confetti" id="confetti" aria-hidden="true"></canvas>
+<noscript><p class="noscript">The wheel needs JavaScript to spin.</p></noscript>
+</body>
+</html>
