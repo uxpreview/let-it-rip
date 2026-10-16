@@ -7,6 +7,9 @@ import { applyOp, normalizeDoc, seedDoc, view } from "../data/ops.js";
 
 const KEY = "wheel/spots.json";
 const MAX_BODY = 2000;
+// Page loads reuse a recent read for a few seconds, so they rarely touch storage.
+const CACHE_MS = 20000;
+let cached = null;
 const hasBlob = () => Boolean(process.env.BLOB_STORE_ID || process.env.BLOB_READ_WRITE_TOKEN);
 const devFile = () => !process.env.VERCEL && !hasBlob();
 
@@ -33,6 +36,7 @@ async function writeDev(doc, etag) {
   if (current.etag !== etag) throw Object.assign(new Error("conflict"), { conflict: true });
   await mkdir(".data", { recursive: true });
   await writeFile(".data/spots.json", JSON.stringify(doc, null, 2));
+  return String(doc.rev);
 }
 
 async function read() {
@@ -54,13 +58,14 @@ async function write(doc, etag) {
   if (devFile()) return writeDev(doc, etag);
   const { put, BlobPreconditionFailedError } = await import("@vercel/blob");
   try {
-    await put(KEY, JSON.stringify(doc), {
+    const saved = await put(KEY, JSON.stringify(doc), {
       access: "private",
       contentType: "application/json",
       addRandomSuffix: false,
       cacheControlMaxAge: 60,
       ...(etag ? { ifMatch: etag } : { allowOverwrite: false }),
     });
+    return saved.etag;
   } catch (err) {
     const raced = !etag && /exist/i.test(String(err && err.message));
     if (err instanceof BlobPreconditionFailedError || raced) throw Object.assign(err, { conflict: true });
@@ -71,8 +76,8 @@ async function write(doc, etag) {
 export async function GET() {
   if (!hasBlob() && !devFile()) return json({ ...view(seedDoc()), shared: false });
   try {
-    const { doc } = await read();
-    return json({ ...view(doc), shared: true });
+    if (!cached || Date.now() - cached.at > CACHE_MS) cached = { ...(await read()), at: Date.now() };
+    return json({ ...view(cached.doc), shared: true });
   } catch (err) {
     console.error("spots read failed", err);
     return json({ error: true, message: "Couldn't load the shared list." }, 502);
@@ -101,8 +106,10 @@ export async function POST(request) {
       const result = applyOp(doc, op);
       if (result.error) return json({ error: true, message: result.message }, result.status);
       try {
-        await write(result.doc, etag);
+        const saved = await write(result.doc, etag);
+        cached = { doc: result.doc, etag: saved, at: Date.now() };
       } catch (err) {
+        cached = null;
         if (err && err.conflict) continue;
         throw err;
       }
