@@ -21,10 +21,20 @@ link can open it and edit the spots.
   It also has buttons to walk there (Google Maps or Apple Maps), share or copy
   for Slack, spin again, or **veto it**. A veto takes that spot off every wheel
   on that device until 5am the next day.
-- **Edit spots** (top right) adds or removes spots on a wheel. The list is
-  shared: a change shows up for everyone. Removed spots go to "Recently
+- **Edit spots** (top right) adds, edits or removes spots on a wheel. The list
+  is shared: a change shows up for everyone. Removed spots go to "Recently
   removed" so they can be put back, and "Restore the original list" resets a
   wheel to the starting spots.
+- **Details.** Typing a name and pressing Add is the quick way. "Add with
+  address, rating…" and the pencil on any spot open the full form: address,
+  walk time, Yelp rating, vibe, good to know, website, and the name printed on
+  the wheel. Bars also get a deal with its days and hours, so the card can say
+  whether it's on right now. Lunch spots get a price and the kind of place.
+  The form links to Google Maps and Yelp to look things up, and if the same
+  place is already on another wheel it offers to copy those details.
+- **Editing a starting spot** saves the office's version for good: later fixes
+  to that spot in `data/spots.js` won't overwrite it. Restoring the original
+  list for that wheel brings back the starting version.
 
 ## Where to change things
 
@@ -37,13 +47,18 @@ link can open it and edit the spots.
 | Look and layout | `assets/app.css` |
 | How the spin feels (speed, length, flick sensitivity) | `spin()` and `release` in `assets/wheel.js` |
 | Sounds | `assets/sound.js` |
-| Rules for adding and removing (limits, duplicates) | `data/ops.js` |
+| Rules for adding, editing and removing (limits, duplicates, which details are kept) | `data/ops.js` |
+| The add and edit form (fields, labels, hints) | `spotForm` in `index.html`, and "details form" in `assets/app.js` |
+| How deal days and hours read ("Mon–Fri, 3–6pm") | `assets/schedule.js` |
 | Link preview image | `og.jpg` (re-render from `scripts/og.html`) |
 
 Editing `data/spots.js` changes what the wheels start with and what "Restore"
 puts back. Fixes to an existing spot (address, rating, deal hours) also show up
-on the live wheel right away. A brand-new spot added to the file appears live
-only after someone restores that wheel, or you can just add it on the page.
+on the live wheel right away, unless someone already edited that spot on the
+page. A brand-new spot added to the file appears live only after someone
+restores that wheel, or you can just add it on the page. Write a deal as what
+it is ("$1 oysters at the bar") and put the days and hours in `when`; the page
+spells out the schedule.
 
 ## How the shared list works
 

@@ -1,8 +1,9 @@
 // Checks the shared-list rules and the starting data. No network, no browser.
 //   npm test
 import assert from "node:assert/strict";
-import { CATS, DRINKS, LIMITS, applyOp, nameKey, normalizeDoc, seedDoc, view } from "../data/ops.js";
+import { CATS, DRINKS, LIMITS, applyOp, cleanDetails, detailsOf, nameKey, normalizeDoc, seedDoc, view } from "../data/ops.js";
 import { SPOTS } from "../data/spots.js";
+import { schedule } from "../assets/schedule.js";
 
 let passed = 0;
 function test(name, fn) {
@@ -59,7 +60,7 @@ test("add, refuse a duplicate, remove, restore", () => {
   doc = ok(added);
   assert.equal(added.spot.name, "The Tam");
   assert.equal(added.spot.short, "Tam");
-  assert.equal(added.spot.note, "Cash only");
+  assert.equal(added.spot.vibe, "Cash only");
   assert.ok(added.spot.custom);
   const dup = applyOp(doc, { op: "add", cat: "adventure", name: "tam" });
   assert.equal(dup.status, 409);
@@ -124,6 +125,154 @@ test("bad stored data is repaired, and corrections in spots.js show through", ()
   assert.equal(doc.spots.oysters.length, SPOTS.oysters.length);
   assert.equal(doc.removed.length, 0);
   assert.equal(view(doc).spots.comfort[0].name, "The Black Rose");
+});
+
+test("a new spot keeps every detail it was given, cleaned", () => {
+  const r = applyOp(seedDoc(), {
+    op: "add",
+    cat: "oysters",
+    spot: {
+      name: "Lucky's Lounge",
+      short: "Lucky's",
+      vibe: " Sinatra on the jukebox,  red booths ",
+      address: "355 Congress St",
+      walk: "9",
+      rating: "4.25",
+      price: "$$",
+      deal: "$1 oysters",
+      when: { days: [5, 1, 1, 9], from: "16", to: "19" },
+      heads: "Cash only.",
+      url: "luckyslounge.com",
+    },
+  });
+  assert.ok(!r.error, r.message);
+  assert.deepEqual(r.spot, {
+    id: r.spot.id,
+    name: "Lucky's Lounge",
+    short: "Lucky's",
+    custom: true,
+    vibe: "Sinatra on the jukebox, red booths",
+    address: "355 Congress St",
+    walk: 9,
+    rating: 4.3,
+    deal: "$1 oysters",
+    when: { days: [1, 5], from: 16, to: 19 },
+    heads: "Cash only.",
+    url: "https://luckyslounge.com/",
+  });
+});
+
+test("bad details are dropped instead of saved", () => {
+  const d = (spot, cat = "comfort") => cleanDetails(spot, cat);
+  for (const url of ["javascript:alert(1)", "JavaScript:alert(1)", "mailto:a@b.com", "data:text/html,hi", "localhost", "not a site"]) {
+    assert.equal(d({ url }).url, undefined, url);
+  }
+  assert.equal(d({ url: "http://bar.com/menu?x=1" }).url, "http://bar.com/menu?x=1");
+  assert.equal(d({ url: "www.bar.com:8080/x" }).url, "https://www.bar.com:8080/x");
+  assert.equal(d({ rating: 7 }).rating, undefined);
+  assert.equal(d({ rating: "abc" }).rating, undefined);
+  assert.equal(d({ walk: 0 }).walk, undefined);
+  assert.equal(d({ walk: 200 }).walk, undefined);
+  assert.equal(d({ deal: "$1 oysters", when: { days: [1], from: 18, to: 17 } }).when, undefined);
+  assert.equal(d({ deal: "$1 oysters", when: { days: [], from: 15, to: 17 } }).when, undefined);
+  assert.equal(d({ deal: "$1 oysters", when: { days: [1], from: null, to: 17 } }).when, undefined);
+  assert.equal(d({ deal: "$1 oysters", when: { days: [1], from: 15.25, to: 17 } }).when, undefined);
+  assert.equal(d({ when: { days: [1], from: 15, to: 17 } }).when, undefined, "hours without a deal");
+  assert.deepEqual(d({ deal: "Half-price wings", when: { days: [2], from: 21, to: null } }).when, { days: [2], from: 21, to: null });
+  assert.equal(d({ heads: "<script>x</script>" }).heads, "scriptx/script");
+  assert.equal(d({ vibe: "x".repeat(200) }).vibe.length, LIMITS.vibe);
+});
+
+test("lunch spots get price and style, bars get deals", () => {
+  const lunch = cleanDetails({ price: "$$$$", style: "sit-down", deal: "Free cookie", when: { days: [1], from: 12, to: 13 } }, "lunch");
+  assert.deepEqual(lunch, { price: "$$$$", style: "sit-down" });
+  assert.deepEqual(cleanDetails({ price: "$$$$$", style: "buffet" }, "lunch"), {});
+  const bar = cleanDetails({ price: "$$", style: "counter", deal: "$5 drafts" }, "adventure");
+  assert.deepEqual(bar, { deal: "$5 drafts" });
+});
+
+test("every starting spot survives being opened and saved unchanged", () => {
+  for (const cat of CATS) {
+    for (const s of SPOTS[cat]) {
+      const d = detailsOf(s, cat);
+      for (const [key, value] of Object.entries(s)) {
+        if (["id", "name", "unsure"].includes(key)) continue;
+        assert.deepEqual(d[key], value, `${s.id}.${key}`);
+      }
+    }
+  }
+});
+
+test("editing a starting spot sticks, and spots.js no longer overrides it", () => {
+  const base = SPOTS.comfort.find((s) => s.id === "mr-dooleys");
+  const r = applyOp(seedDoc(), { op: "update", cat: "comfort", id: "mr-dooleys", spot: { ...detailsOf(base, "comfort"), name: base.name, walk: 7, heads: "Trivia on Tuesdays." } });
+  assert.ok(!r.error, r.message);
+  const shown = view(r.doc).spots.comfort.find((s) => s.id === "mr-dooleys");
+  assert.equal(shown.walk, 7);
+  assert.equal(shown.heads, "Trivia on Tuesdays.");
+  assert.equal(shown.address, base.address);
+  assert.ok(shown.edited && !shown.custom);
+  assert.equal(r.message, "Saved Mr. Dooley's.");
+});
+
+test("editing can clear a detail, rename, and keep the id", () => {
+  let doc = seedDoc();
+  const added = applyOp(doc, { op: "add", cat: "adventure", spot: { name: "Green Dragon", vibe: "Where the minutemen met." } });
+  doc = ok(added);
+  const r = applyOp(doc, { op: "update", cat: "adventure", id: added.spot.id, spot: { name: "The Green Dragon Tavern", address: "11 Marshall St" } });
+  doc = ok(r);
+  const s = doc.spots.adventure.find((x) => x.id === added.spot.id);
+  assert.equal(s.name, "The Green Dragon Tavern");
+  assert.equal(s.short, "Green Dragon Tavern");
+  assert.equal(s.address, "11 Marshall St");
+  assert.equal(s.vibe, undefined);
+  assert.ok(s.custom && !s.edited);
+});
+
+test("editing a place on two wheels updates both", () => {
+  const base = SPOTS.comfort.find((s) => s.id === "state-street-provisions");
+  const doc = ok(
+    applyOp(seedDoc(), {
+      op: "update",
+      cat: "oysters",
+      id: base.id,
+      spot: { ...detailsOf(base, "oysters"), name: base.name, when: { days: [1, 2, 3, 4, 5], from: 15, to: 18 } },
+    })
+  );
+  for (const cat of ["comfort", "oysters"]) {
+    assert.deepEqual(view(doc).spots[cat].find((s) => s.id === base.id).when, { days: [1, 2, 3, 4, 5], from: 15, to: 18 }, cat);
+  }
+});
+
+test("edits refuse a taken name and a missing spot", () => {
+  const taken = applyOp(seedDoc(), { op: "update", cat: "comfort", id: "black-rose", spot: { name: "mr dooleys" } });
+  assert.equal(taken.status, 409);
+  const gone = applyOp(seedDoc(), { op: "update", cat: "comfort", id: "nope", spot: { name: "Nope" } });
+  assert.equal(gone.status, 404);
+  const blank = applyOp(seedDoc(), { op: "update", cat: "comfort", id: "black-rose", spot: { name: "  " } });
+  assert.equal(blank.status, 400);
+});
+
+test("re-adding a removed starting spot with new details keeps the rest", () => {
+  let doc = ok(applyOp(seedDoc(), { op: "remove", cat: "comfort", id: "black-rose" }));
+  const back = applyOp(doc, { op: "add", cat: "comfort", spot: { name: "black rose", walk: 4 } });
+  doc = ok(back);
+  const s = view(doc).spots.comfort.find((x) => x.id === "black-rose");
+  assert.equal(s.walk, 4);
+  assert.equal(s.address, "160 State St");
+  assert.equal(s.name, "The Black Rose");
+  assert.ok(s.edited);
+});
+
+test("deal days and hours read naturally", () => {
+  assert.equal(schedule({ days: [1, 2, 3, 4, 5], from: 15, to: 18 }), "Mon–Fri, 3–6pm");
+  assert.equal(schedule({ days: [1, 5], from: 16, to: 19 }), "Mon and Fri, 4–7pm");
+  assert.equal(schedule({ days: [4], from: 17, to: null }), "Thursdays from 5pm");
+  assert.equal(schedule({ days: [0, 1, 2, 3, 4, 5, 6], from: 14, to: 18 }), "Daily, 2–6pm");
+  assert.equal(schedule({ days: [0, 6], from: 11.5, to: 14 }), "Sat and Sun, 11:30am–2pm");
+  assert.equal(schedule({ days: [1, 2, 4], from: 21, to: 24 }), "Mon, Tue and Thu, 9pm–midnight");
+  assert.equal(schedule(null), "");
+  for (const cat of CATS) for (const s of SPOTS[cat]) if (s.deal) assert.ok(!/\d(am|pm)|day/i.test(s.deal), `${s.id} repeats its hours in the deal text`);
 });
 
 console.log(`\n${passed} passed`);
