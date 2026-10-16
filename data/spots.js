@@ -17,6 +17,8 @@
 //   when     when the deal runs, so the card can say if it's on today:
 //            days are 0 = Sunday ... 6 = Saturday, hours are 24h (15.5 = 3:30pm)
 //   unsure   true when sources disagree about the deal
+//   price    "$", "$$" or "$$$" (lunch)
+//   style    "counter", "sit-down" or "food hall" (lunch)
 //   url      website
 
 export const CHECKED = "October 2026";
@@ -345,5 +347,12 @@ export const SPOTS = {
       heads: "Walk-ins only, about 37 seats. Best for a small crew.",
       url: "https://www.neptuneoyster.com/",
     },
+  ],
+
+  lunch: [
+    { id: "casa-razdora", name: "Casa Razdora", short: "Casa Razdora", address: "115 Water St", walk: 5, price: "$", style: "counter", vibe: "Fresh pasta and Italian sandwiches." },
+    { id: "zo", name: "Zo", short: "Zo", address: "3 Center Plaza", walk: 6, price: "$", style: "counter", vibe: "Greek gyros and souvlaki." },
+    { id: "falafel-king", name: "Falafel King", short: "Falafel King", address: "48 Winter St", walk: 7, price: "$", style: "counter", vibe: "Falafel and shawarma." },
+    { id: "tatte", name: "Tatte", short: "Tatte", address: null, walk: null, price: "$$", style: "counter", vibe: "Bakery and cafe." },
   ],
 };

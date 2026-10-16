@@ -1,7 +1,7 @@
 import { createWheel } from "./wheel.js";
 import * as sound from "./sound.js";
 import { mountConfetti, burst } from "./confetti.js";
-import { CATS, CAT_LABEL, applyOp, nameKey, normalizeDoc, seedDoc, view } from "../data/ops.js";
+import { DRINKS, CAT_LABEL, applyOp, nameKey, normalizeDoc, seedDoc, view } from "../data/ops.js";
 import { CHECKED, RATINGS_FROM } from "../data/spots.js";
 
 // Wheel names and lines. Edit freely.
@@ -10,6 +10,7 @@ const MODES = {
   comfort: { label: "Comfort", meta: "Familiar bars", title: "Comfort.", tagline: "The usual suspects. Good pints, no surprises." },
   adventure: { label: "Adventure", meta: "Outside our comfort zone", title: "Adventure.", tagline: "Somewhere we would never pick on purpose." },
   oysters: { label: "Oysters", meta: "Mostly dollar oysters", title: "Oysters.", tagline: "Buck-a-shuck. Briny, cheap, very Boston." },
+  lunch: { label: "Lunch", meta: "Weekday lunch", title: "Lunch.", tagline: "Hungry and undecided? Let the wheel pick." },
 };
 
 // Slice colors per wheel: [fill, text].
@@ -17,18 +18,24 @@ const TONES = {
   comfort: [["#F2A93B", "#2A1606"], ["#7B3A1F", "#FBEAD2"], ["#F6E4C4", "#3A2210"]],
   adventure: [["#FF4F8B", "#2B0716"], ["#5B3BE0", "#FFFFFF"], ["#D9F35B", "#1E2405"]],
   oysters: [["#7FD8C3", "#05302A"], ["#0F5257", "#E6FFF8"], ["#EEF0E8", "#0F3B3B"]],
+  lunch: [["#E8553D", "#2A0D06"], ["#F6D34A", "#2B2205"], ["#2F7A4B", "#F4FFF6"], ["#F7EEDD", "#3A2A12"]],
 };
 
 const CONFETTI = {
   comfort: { colors: ["#F2A93B", "#FBEAD2", "#C2662F", "#FFD27A", "#FFFFFF"], shapes: ["rect", "rect", "circle", "streamer"] },
   adventure: { colors: ["#FF4F8B", "#7B5BFF", "#D9F35B", "#FFFFFF", "#FFB3CF"], shapes: ["rect", "star", "star", "streamer"] },
   oysters: { colors: ["#7FD8C3", "#EEF0E8", "#BFE9DF", "#FFFFFF", "#9CC9D6"], shapes: ["pearl", "pearl", "circle", "rect"] },
+  lunch: { colors: ["#E8553D", "#F6D34A", "#2F7A4B", "#F7EEDD", "#FF8A5B"], shapes: ["rect", "circle", "streamer", "rect"] },
 };
 
-const KICKERS = ["The wheel has spoken:", "Tonight we ride to", "No take-backs:", "Destiny says", "Grab your coat, it's", "Tonight's spot:"];
+const KICKERS = {
+  drinks: ["The wheel has spoken:", "Tonight we ride to", "No take-backs:", "Destiny says", "Grab your coat, it's", "Tonight's spot:"],
+  lunch: ["Today's lunch:", "The wheel is hungry for", "Grab your wallet, it's", "Lunch is", "No take-backs:"],
+};
+const STYLE_LABEL = { counter: "Grab and go", "sit-down": "Sit-down", "food hall": "Food hall" };
 const OFFICE = "31 State St, Boston, MA 02109";
 const SITE = "https://wheel.uxpreview.com";
-const KEY = { mode: "wheel.mode", sound: "wheel.sound", cache: "wheel.shared", local: "wheel.local", vetoes: "wheel.vetoes" };
+const KEY = { mode: "wheel.mode", tab: "wheel.tab", sound: "wheel.sound", cache: "wheel.shared", local: "wheel.local", vetoes: "wheel.vetoes" };
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -61,6 +68,7 @@ const ui = {
   title: $("#modeTitle"),
   tagline: $("#modeTagline"),
   modes: $("#modes"),
+  daypart: $("#daypart"),
   spinBtn: $("#spinBtn"),
   hub: $("#hubBtn"),
   wheel: $("#wheel"),
@@ -98,13 +106,16 @@ const ui = {
   announcer: $("#announcer"),
 };
 
-let mode = MODES[store.get(KEY.mode)] ? store.get(KEY.mode) : "all";
+let tab = document.documentElement.dataset.tab === "lunch" ? "lunch" : "drinks";
+let mode = DRINKS.includes(store.get(KEY.mode)) || store.get(KEY.mode) === "all" ? store.get(KEY.mode) : "all";
+const wheelKey = () => (tab === "lunch" ? "lunch" : mode);
+const tabCats = () => (tab === "lunch" ? ["lunch"] : DRINKS);
 let shared = null;
 let doc = view(normalizeDoc(store.get(KEY.cache) || seedDoc()));
 let spinning = false;
 let result = null;
 let staleWheel = false;
-let drawerCat = mode === "all" ? "comfort" : mode;
+let drawerCat = tab === "lunch" ? "lunch" : mode === "all" ? "comfort" : mode;
 let lastFocus = null;
 
 // ---------- vetoes (this device, until 5am Boston time) ----------
@@ -131,7 +142,7 @@ function spotsFor(cat) {
 }
 
 function allSpots() {
-  const lists = CATS.map(spotsFor);
+  const lists = DRINKS.map(spotsFor);
   const out = [];
   const seen = new Set();
   const longest = Math.max(...lists.map((l) => l.length));
@@ -150,16 +161,21 @@ function allSpots() {
 
 function onWheel() {
   const vetoed = vetoes();
-  const list = mode === "all" ? allSpots() : spotsFor(mode);
+  const key = wheelKey();
+  const list = key === "all" ? allSpots() : spotsFor(key);
   return list.filter((s) => !vetoed.has(s.id));
 }
 
 function paintSlices(list) {
-  const counters = { comfort: 0, adventure: 0, oysters: 0 };
-  const tone = list.map((s) => counters[s.cat]++ % 3);
+  const counters = {};
+  const tone = list.map((s) => {
+    counters[s.cat] = (counters[s.cat] || 0) + 1;
+    return (counters[s.cat] - 1) % TONES[s.cat].length;
+  });
   const n = list.length;
   if (n > 2 && list[n - 1].cat === list[0].cat && tone[n - 1] === tone[0]) {
-    tone[n - 1] = [0, 1, 2].find((t) => t !== tone[0] && !(list[n - 2].cat === list[n - 1].cat && t === tone[n - 2]));
+    const options = TONES[list[n - 1].cat].map((_, t) => t);
+    tone[n - 1] = options.find((t) => t !== tone[0] && !(list[n - 2].cat === list[n - 1].cat && t === tone[n - 2]));
   }
   return list.map((s, i) => {
     const [fill, ink] = TONES[s.cat][tone[i]];
@@ -202,7 +218,7 @@ function renderModes() {
 }
 
 function renderHeadline(animate) {
-  const m = MODES[mode];
+  const m = MODES[wheelKey()];
   const apply = () => {
     ui.title.textContent = m.title;
     ui.tagline.textContent = m.tagline;
@@ -223,11 +239,11 @@ function renderHeadline(animate) {
 }
 
 function setMode(next, { focus = false } = {}) {
-  if (!MODES[next] || spinning) return;
+  if (!MODES[next] || next === "lunch" || tab === "lunch" || spinning) return;
   if (next === mode) return;
   mode = next;
   store.set(KEY.mode, mode);
-  ui.body.dataset.mode = mode;
+  ui.body.dataset.mode = wheelKey();
   closeResult({ restoreFocus: false });
   renderModes();
   renderHeadline(true);
@@ -242,7 +258,7 @@ ui.modes.addEventListener("click", (e) => {
 });
 
 ui.modes.addEventListener("keydown", (e) => {
-  const order = Object.keys(MODES);
+  const order = ["all", ...DRINKS];
   const i = order.indexOf(mode);
   const keys = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
   let next = null;
@@ -253,6 +269,57 @@ ui.modes.addEventListener("keydown", (e) => {
     e.preventDefault();
     setMode(next, { focus: true });
   }
+});
+
+// ---------- lunch / drinks ----------
+
+function renderTabs() {
+  document.documentElement.dataset.tab = tab;
+  ui.body.dataset.mode = wheelKey();
+  $$(".daypart-tab", ui.daypart).forEach((b) => {
+    const on = b.dataset.tab === tab;
+    b.setAttribute("aria-selected", String(on));
+    b.tabIndex = on ? 0 : -1;
+  });
+  const meta = $('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", tab === "lunch" ? "#efe5d4" : "#0b0c14");
+}
+
+function setTab(next, { focus = false } = {}) {
+  if ((next !== "lunch" && next !== "drinks") || next === tab || spinning) return;
+  const apply = () => {
+    tab = next;
+    try {
+      sessionStorage.setItem(KEY.tab, tab);
+    } catch {}
+    history.replaceState(null, "", `#${tab}`);
+    closeResult({ restoreFocus: false });
+    renderTabs();
+    renderModes();
+    renderHeadline(false);
+    renderWheel();
+    renderVetoes();
+    if (focus) $(`.daypart-tab[data-tab="${tab}"]`, ui.daypart).focus();
+  };
+  if (document.startViewTransition && !reducedMotion()) document.startViewTransition(apply);
+  else apply();
+}
+
+ui.daypart.addEventListener("click", (e) => {
+  const b = e.target.closest(".daypart-tab");
+  if (b) setTab(b.dataset.tab);
+});
+
+ui.daypart.addEventListener("keydown", (e) => {
+  if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return;
+  e.preventDefault();
+  const next = e.key === "Home" ? "lunch" : e.key === "End" ? "drinks" : tab === "lunch" ? "drinks" : "lunch";
+  setTab(next, { focus: true });
+});
+
+addEventListener("hashchange", () => {
+  const next = location.hash.slice(1);
+  if (next === "lunch" || next === "drinks") setTab(next);
 });
 
 // ---------- spinning ----------
@@ -288,9 +355,9 @@ async function spin({ velocity, dir = 1, windup = true } = {}) {
   }
   result = null;
   setSpinning(true);
-  sound.whoosh(mode === "all" ? 1.2 : 1);
+  sound.whoosh(wheelKey() === "all" ? 1.2 : 1);
   const index = randomInt(wheelList.length);
-  const v = velocity || (mode === "all" ? 1500 : 1180) * (0.9 + Math.random() * 0.25);
+  const v = velocity || (wheelKey() === "all" ? 1500 : 1180) * (0.9 + Math.random() * 0.25);
   const landed = await wheel.spin({ index, velocity: v, dir, windup, reduced: reducedMotion() });
   const slice = wheelList[landed == null ? index : landed];
   result = slice.spot;
@@ -360,13 +427,16 @@ function dealStatus(when) {
 }
 
 function showResult(spot) {
-  ui.resultKicker.textContent = KICKERS[randomInt(KICKERS.length)];
+  const kickers = KICKERS[tab];
+  ui.resultKicker.textContent = kickers[randomInt(kickers.length)];
   ui.resultName.textContent = spot.name;
   ui.resultMeta.replaceChildren();
   const cat = chip(CAT_LABEL[spot.cat], `chip-cat chip-${spot.cat}`);
   ui.resultMeta.append(cat);
   if (spot.walk) ui.resultMeta.append(chip(`${spot.walk} min walk`, "chip-walk"));
   if (spot.rating) ui.resultMeta.append(chip(`★ ${Number(spot.rating).toFixed(1)} on ${RATINGS_FROM}`, "chip-rating"));
+  if (spot.price) ui.resultMeta.append(chip(spot.price, "chip-price"));
+  if (STYLE_LABEL[spot.style]) ui.resultMeta.append(chip(STYLE_LABEL[spot.style], "chip-style"));
   if (spot.address) ui.resultMeta.append(chip(spot.address, "chip-address"));
   const vibe = spot.vibe || spot.note || "";
   ui.resultVibe.textContent = vibe;
@@ -481,17 +551,19 @@ ui.vetoBtn.addEventListener("click", () => {
 ui.shareBtn.addEventListener("click", async () => {
   if (!result) return;
   const where = [result.address, result.walk ? `${result.walk} min walk` : ""].filter(Boolean).join(", ");
-  const text = `The wheel has spoken: ${result.name}${where ? ` (${where})` : ""}.`;
+  const lead = result.cat === "lunch" ? "Lunch, decided" : "The wheel has spoken";
+  const text = `${lead}: ${result.name}${where ? ` (${where})` : ""}.`;
+  const link = `${SITE}/#${result.cat === "lunch" ? "lunch" : "drinks"}`;
   if (navigator.share && matchMedia("(pointer: coarse)").matches) {
     try {
-      await navigator.share({ title: "Tonight's spot", text, url: SITE });
+      await navigator.share({ title: result.cat === "lunch" ? "Today's lunch" : "Tonight's spot", text, url: link });
       return;
     } catch (err) {
       if (err && err.name === "AbortError") return;
     }
   }
   try {
-    await navigator.clipboard.writeText(`${text} ${SITE}`);
+    await navigator.clipboard.writeText(`${text} ${link}`);
     toast("Copied. Paste it in Slack.");
   } catch {
     toast("Couldn't copy. Long-press the name instead.");
@@ -502,7 +574,7 @@ ui.shareBtn.addEventListener("click", async () => {
 
 function renderVetoes() {
   const vetoed = vetoes();
-  const all = CATS.flatMap(spotsFor);
+  const all = tabCats().flatMap(spotsFor);
   const list = all.filter((s) => vetoed.has(s.id));
   const unique = [...new Map(list.map((s) => [s.id, s])).values()];
   ui.vetoes.hidden = unique.length === 0;
@@ -628,7 +700,9 @@ function renderSync() {
 }
 
 function metaLine(s) {
-  return [s.walk ? `${s.walk} min walk` : "", s.deal || s.note || "", s.custom ? "Added by the office" : ""].filter(Boolean).join(" · ");
+  return [s.walk ? `${s.walk} min walk` : "", s.price || "", STYLE_LABEL[s.style] || "", s.deal || s.note || "", s.custom ? "Added by the office" : ""]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 function renderDrawer() {
@@ -640,6 +714,7 @@ function renderDrawer() {
     $(".tab-count", b).textContent = (doc.spots[b.dataset.cat] || []).length;
   });
   ui.addName.placeholder = `Add a spot to ${CAT_LABEL[drawerCat]}`;
+  ui.addNote.placeholder = drawerCat === "lunch" ? "Note, like “cash only” (optional)" : "Note, like “$1 oysters Tue 4–6” (optional)";
   const vetoed = vetoes();
   const list = doc.spots[drawerCat] || [];
   ui.spotList.replaceChildren(
@@ -713,7 +788,7 @@ function renderReset(confirming) {
 function openDrawer() {
   if (spinning) return;
   lastFocus = document.activeElement;
-  drawerCat = mode === "all" ? drawerCat || "comfort" : mode;
+  drawerCat = tab === "lunch" ? "lunch" : mode === "all" ? (DRINKS.includes(drawerCat) ? drawerCat : "comfort") : mode;
   renderSync();
   renderDrawer();
   ui.drawer.hidden = false;
@@ -760,8 +835,9 @@ ui.drawerTabs.addEventListener("keydown", (e) => {
   const keys = { ArrowRight: 1, ArrowLeft: -1 };
   if (!(e.key in keys)) return;
   e.preventDefault();
-  const i = CATS.indexOf(drawerCat);
-  drawerCat = CATS[(i + keys[e.key] + CATS.length) % CATS.length];
+  const cats = tabCats();
+  const i = cats.indexOf(drawerCat);
+  drawerCat = cats[(i + keys[e.key] + cats.length) % cats.length];
   renderDrawer();
   $(`button[data-cat="${drawerCat}"]`, ui.drawerTabs).focus();
 });
@@ -921,9 +997,9 @@ makeBulbs();
 sound.setEnabled(store.get(KEY.sound, true) !== false);
 renderSound();
 mountConfetti($("#confetti"));
-ui.body.dataset.mode = mode;
-ui.title.textContent = MODES[mode].title;
-ui.tagline.textContent = MODES[mode].tagline;
+renderTabs();
+ui.title.textContent = MODES[wheelKey()].title;
+ui.tagline.textContent = MODES[wheelKey()].tagline;
 renderModes();
 renderWheel();
 renderVetoes();
