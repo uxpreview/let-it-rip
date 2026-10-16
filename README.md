@@ -48,7 +48,7 @@ only after someone restores that wheel, or you can just add it on the page.
 ## How the shared list works
 
 The live list is one private JSON file (`wheel/spots.json`) in a Vercel Blob
-store connected to the `wheel` Vercel project. `api/spots.js` reads it and
+store connected to the `let-it-rip` Vercel project. `api/spots.js` reads it and
 applies changes. Each save checks that nobody else saved in between, so two
 people editing at once can't overwrite each other.
 
@@ -66,9 +66,9 @@ npm test        # checks the add/remove rules and the starting data
 
 ## Deploys
 
-Pushing to `main` deploys to production (Vercel project `wheel`, team ryankm).
-The domain `wheel.uxpreview.com` needs a CNAME at Squarespace DNS:
-`wheel → cname.vercel-dns.com`.
+Pushing to `main` deploys to production (Vercel project `let-it-rip`, team
+ryankm). The domain `wheel.uxpreview.com` points there through a CNAME at
+Squarespace DNS: `wheel → cname.vercel-dns.com`.
 
 ## About the starting data
 
