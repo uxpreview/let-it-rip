@@ -115,6 +115,14 @@ kbd {
   mix-blend-mode: soft-light;
 }
 
+.page {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  overflow: clip;
+}
+
 /* ---------- top bar ---------- */
 
 .topbar {
@@ -124,6 +132,8 @@ kbd {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  max-width: 1720px;
+  margin: 0 auto;
   padding: max(14px, env(safe-area-inset-top)) var(--gutter) 10px;
 }
 .brand {
