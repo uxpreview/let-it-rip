@@ -1,8 +1,9 @@
 import { createWheel } from "./wheel.js";
 import * as sound from "./sound.js";
 import { mountConfetti, burst } from "./confetti.js";
-import { DRINKS, CAT_LABEL, applyOp, nameKey, normalizeDoc, seedDoc, view } from "../data/ops.js";
+import { DRINKS, CATS, CAT_LABEL, LIMITS, applyOp, autoShort, clean, cleanDetails, detailsOf, nameKey, normalizeDoc, seedDoc, view } from "../data/ops.js";
 import { CHECKED, RATINGS_FROM } from "../data/spots.js";
+import { DAY_NAMES, clock, schedule } from "./schedule.js";
 
 // Wheel names and lines. Edit freely.
 const MODES = {
@@ -94,14 +95,38 @@ const ui = {
   drawerClose: $("#drawerClose"),
   syncNote: $("#syncNote"),
   drawerTabs: $("#drawerTabs"),
+  drawerBack: $("#drawerBack"),
+  drawerTitle: $("#drawerTitle"),
+  listView: $("#listView"),
   addForm: $("#addForm"),
   addName: $("#addName"),
-  addNote: $("#addNote"),
+  addMore: $("#addMore"),
   spotList: $("#spotList"),
   removedBox: $("#removedBox"),
   removedList: $("#removedList"),
   removedCount: $("#removedCount"),
   resetArea: $("#resetArea"),
+  spotForm: $("#spotForm"),
+  formIntro: $("#formIntro"),
+  fName: $("#fName"),
+  fTwin: $("#fTwin"),
+  fTwinText: $("#fTwinText"),
+  fTwinCopy: $("#fTwinCopy"),
+  fLookup: $("#fLookup"),
+  fMaps: $("#fMaps"),
+  fYelp: $("#fYelp"),
+  fShort: $("#fShort"),
+  fVibe: $("#fVibe"),
+  fAddress: $("#fAddress"),
+  fWalk: $("#fWalk"),
+  fRating: $("#fRating"),
+  fDeal: $("#fDeal"),
+  fFrom: $("#fFrom"),
+  fTo: $("#fTo"),
+  fHeads: $("#fHeads"),
+  fUrl: $("#fUrl"),
+  formSubmit: $("#formSubmit"),
+  formCancel: $("#formCancel"),
   toast: $("#toast"),
   announcer: $("#announcer"),
 };
@@ -398,9 +423,10 @@ function chip(text, cls = "") {
   return span;
 }
 
-// ---------- deal timing (Boston time) ----------
+// Only plain web links become clickable.
+const safeUrl = (url) => (typeof url === "string" && /^https?:\/\//i.test(url) ? url : "");
 
-const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+// ---------- deal timing (Boston time) ----------
 
 function bostonNow() {
   const parts = Object.fromEntries(
@@ -410,13 +436,6 @@ function bostonNow() {
   );
   const day = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(parts.weekday);
   return { day, hour: Number(parts.hour) + Number(parts.minute) / 60 };
-}
-
-function clock(h) {
-  const hr = Math.floor(h);
-  const min = Math.round((h - hr) * 60);
-  const h12 = hr % 12 === 0 ? 12 : hr % 12;
-  return `${h12}${min ? `:${String(min).padStart(2, "0")}` : ""}${hr < 12 ? "am" : "pm"}`;
 }
 
 function dealStatus(when) {
@@ -453,11 +472,13 @@ function showResult(spot) {
       $(".deal-status-text", statusEl).textContent = status.text;
     }
     $(".deal-text", ui.resultDeal).textContent = spot.deal;
-    $(".deal-checked", ui.resultDeal).textContent = spot.custom
-      ? ""
-      : spot.unsure
-        ? `Sources disagree on the days. Check before you go.`
-        : `Checked ${CHECKED}. Deals change, so peek before you go.`;
+    $(".deal-when", ui.resultDeal).textContent = schedule(spot.when);
+    $(".deal-checked", ui.resultDeal).textContent =
+      spot.custom || spot.edited
+        ? "Deals change, so peek before you go."
+        : spot.unsure
+          ? `Sources disagree on the days. Check before you go.`
+          : `Checked ${CHECKED}. Deals change, so peek before you go.`;
   } else {
     ui.resultDeal.hidden = true;
   }
@@ -465,8 +486,9 @@ function showResult(spot) {
   $(".heads-text", ui.resultHeads).textContent = spot.heads || "";
   ui.goBtn.href = directionsUrl(spot);
   ui.appleLink.href = appleUrl(spot);
-  ui.siteLink.hidden = !spot.url;
-  if (spot.url) ui.siteLink.href = spot.url;
+  const site = safeUrl(spot.url);
+  ui.siteLink.hidden = !site;
+  if (site) ui.siteLink.href = site;
   ui.vetoBtn.hidden = wheelList.length < 2;
 
   ui.result.hidden = false;
@@ -705,8 +727,20 @@ function renderSync() {
           : "Loading the shared list…";
 }
 
+function dealLine(s) {
+  if (!s.deal) return "";
+  const when = schedule(s.when);
+  return when ? `${s.deal}, ${when}` : s.deal;
+}
+
 function metaLine(s) {
-  return [s.walk ? `${s.walk} min walk` : "", s.price || "", STYLE_LABEL[s.style] || "", s.deal || s.note || "", s.custom ? "Added by the office" : ""]
+  return [
+    s.walk ? `${s.walk} min walk` : "",
+    s.price || "",
+    STYLE_LABEL[s.style] || "",
+    dealLine(s) || (s.custom ? s.vibe || s.note || "" : ""),
+    s.custom ? "Added by the office" : s.edited ? "Edited by the office" : "",
+  ]
     .filter(Boolean)
     .join(" · ");
 }
@@ -720,20 +754,25 @@ function renderDrawer() {
     $(".tab-count", b).textContent = (doc.spots[b.dataset.cat] || []).length;
   });
   ui.addName.placeholder = `Add a spot to ${CAT_LABEL[drawerCat]}`;
-  ui.addNote.placeholder = drawerCat === "lunch" ? "Note, like “cash only” (optional)" : "Note, like “$1 oysters Tue 4–6” (optional)";
+  ui.addMore.textContent = drawerCat === "lunch" ? "Add with address, rating, price and more" : "Add with address, rating, deal and more";
   const vetoed = vetoes();
   const list = doc.spots[drawerCat] || [];
   ui.spotList.replaceChildren(
     ...list.map((s) => {
       const li = document.createElement("li");
       li.className = "spot-row";
+      li.dataset.id = s.id;
       li.innerHTML =
         '<span class="spot-dot" aria-hidden="true"></span><span class="spot-text"><span class="spot-name"></span><span class="spot-meta"></span></span>' +
+        '<button type="button" class="icon-btn spot-edit"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 16l.8-3.6L13 4.2a1.9 1.9 0 0 1 2.8 2.8L7.6 15.2zM11.6 5.6l2.8 2.8"/></svg></button>' +
         '<button type="button" class="icon-btn spot-remove"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg></button>';
       $(".spot-name", li).textContent = s.name;
       const meta = metaLine(s) + (vetoed.has(s.id) ? (metaLine(s) ? " · " : "") + "Vetoed tonight" : "");
       $(".spot-meta", li).textContent = meta;
       $(".spot-meta", li).hidden = !meta;
+      const edit = $(".spot-edit", li);
+      edit.dataset.id = s.id;
+      edit.setAttribute("aria-label", `Edit ${s.name}`);
       const btn = $(".spot-remove", li);
       btn.dataset.id = s.id;
       btn.setAttribute("aria-label", `Remove ${s.name}`);
@@ -805,12 +844,13 @@ function openDrawer() {
   });
   ui.editBtn.setAttribute("aria-expanded", "true");
   document.documentElement.classList.add("drawer-open");
-  setTimeout(() => ui.addName.focus({ preventScroll: true }), 60);
+  setTimeout(() => form || ui.addName.focus({ preventScroll: true }), 60);
   if (shared !== false) loadShared();
 }
 
 function closeDrawer() {
   if (!ui.drawer.classList.contains("is-open")) return;
+  if (form) showList();
   ui.drawer.classList.remove("is-open");
   ui.backdrop.classList.remove("is-open");
   ui.editBtn.setAttribute("aria-expanded", "false");
@@ -857,17 +897,27 @@ ui.addForm.addEventListener("submit", async (e) => {
   }
   const submit = $("button[type=submit]", ui.addForm);
   submit.disabled = true;
-  const res = await change({ op: "add", cat: drawerCat, name, note: ui.addNote.value });
+  const cat = drawerCat;
+  const res = await change({ op: "add", cat, spot: { name } });
   submit.disabled = false;
   if (res) {
     ui.addName.value = "";
-    ui.addNote.value = "";
-    toast(res.message || `Added ${name}.`);
+    const id = res.spot && res.spot.id;
+    toast(res.message || `Added ${name}.`, id ? { label: "Add details", run: () => editSpot(cat, id) } : null);
     ui.addName.focus();
   }
 });
 
+ui.addMore.addEventListener("click", () => openForm({ name: ui.addName.value }));
+
 ui.spotList.addEventListener("click", async (e) => {
+  const open = e.target.closest(".spot-edit, .spot-text");
+  if (open) {
+    const id = open.closest(".spot-row").dataset.id;
+    const spot = (doc.spots[drawerCat] || []).find((s) => s.id === id);
+    if (spot) openForm({ spot });
+    return;
+  }
   const btn = e.target.closest(".spot-remove");
   if (!btn) return;
   const id = btn.dataset.id;
@@ -902,11 +952,277 @@ ui.resetArea.addEventListener("click", async (e) => {
   if (res) toast(res.message);
 });
 
+// ---------- details form: add a spot with details, or edit one ----------
+
+let form = null;
+
+// Deal hours, every half hour. A deal can also run until close.
+const STARTS = Array.from({ length: 28 }, (_, i) => 10 + i / 2);
+const ENDS = STARTS.map((h) => h + 0.5);
+
+function option(value, label) {
+  const o = document.createElement("option");
+  o.value = value;
+  o.textContent = label;
+  return o;
+}
+
+function setSelect(select, value) {
+  if (![...select.options].some((o) => o.value === value)) select.append(option(value, clock(Number(value))));
+  select.value = value;
+}
+
+function checkedValue(name) {
+  const input = $(`input[name="${name}"]:checked`, ui.spotForm);
+  return input ? input.value : "";
+}
+
+function setChecked(name, value) {
+  $$(`input[name="${name}"]`, ui.spotForm).forEach((i) => (i.checked = i.value === value));
+}
+
+// Lunch spots get price and style; bars get the deal. The other set is switched off.
+function fieldsFor(cat) {
+  const lunch = cat === "lunch";
+  $$(".only-lunch", ui.spotForm).forEach((f) => (f.disabled = !lunch));
+  $$(".only-drinks", ui.spotForm).forEach((f) => (f.disabled = lunch));
+}
+
+function fillForm(spot, cat) {
+  ui.spotForm.reset();
+  const d = spot ? detailsOf(spot, cat) : {};
+  ui.fName.value = spot ? spot.name : "";
+  ui.fShort.value = d.short && d.short !== autoShort(spot.name) ? d.short : "";
+  ui.fVibe.value = d.vibe || "";
+  ui.fAddress.value = d.address || "";
+  ui.fWalk.value = d.walk ?? "";
+  ui.fRating.value = d.rating != null ? d.rating.toFixed(1) : "";
+  setChecked("price", d.price || "");
+  setChecked("style", d.style || "");
+  ui.fDeal.value = d.deal || "";
+  $$('input[name="day"]', ui.spotForm).forEach((i) => (i.checked = Boolean(d.when && d.when.days.includes(Number(i.value)))));
+  setSelect(ui.fFrom, d.when ? String(d.when.from) : "");
+  setSelect(ui.fTo, d.when && d.when.to != null ? String(d.when.to) : "close");
+  ui.fHeads.value = d.heads || "";
+  ui.fUrl.value = d.url || "";
+}
+
+function readForm() {
+  const days = $$('input[name="day"]:checked', ui.spotForm).map((i) => Number(i.value));
+  const from = ui.fFrom.value;
+  const to = ui.fTo.value;
+  return {
+    name: ui.fName.value,
+    short: ui.fShort.value,
+    vibe: ui.fVibe.value,
+    address: ui.fAddress.value,
+    walk: ui.fWalk.value,
+    rating: ui.fRating.value,
+    price: checkedValue("price"),
+    style: checkedValue("style"),
+    deal: ui.fDeal.value,
+    when: days.length && from !== "" ? { days, from: Number(from), to: to === "close" ? null : Number(to) } : null,
+    heads: ui.fHeads.value,
+    url: ui.fUrl.value,
+  };
+}
+
+// Two versions of a spot match when their saved details would be the same.
+function snapshot(name, details) {
+  const n = clean(name, LIMITS.name);
+  const all = { ...details, name: n, short: details.short || autoShort(n) };
+  return JSON.stringify(Object.keys(all).sort().map((k) => [k, all[k]]));
+}
+
+// The same place on another wheel, so its details can be copied over.
+function twinOf(name) {
+  const key = nameKey(name);
+  if (!key || !form) return null;
+  const same = (doc.spots[form.cat] || []).find((s) => s.id !== form.id && nameKey(s.name) === key);
+  if (same) return { spot: same, cat: form.cat, same: true };
+  for (const cat of CATS) {
+    if (cat === form.cat) continue;
+    const spot = (doc.spots[cat] || []).find((s) => s.id !== form.id && (nameKey(s.name) === key || nameKey(s.short) === key));
+    if (spot && Object.keys(detailsOf(spot, form.cat)).some((k) => k !== "short")) return { spot, cat, same: false };
+  }
+  return null;
+}
+
+function formHelpers() {
+  const name = ui.fName.value.trim();
+  ui.fLookup.hidden = !name;
+  if (name) {
+    ui.fMaps.href = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(OFFICE)}&destination=${encodeURIComponent(
+      `${name}, Boston, MA`
+    )}&travelmode=walking`;
+    ui.fYelp.href = `https://www.yelp.com/search?find_desc=${encodeURIComponent(name)}&find_loc=${encodeURIComponent(OFFICE)}`;
+  }
+  const twin = twinOf(name);
+  ui.fTwin.hidden = !twin;
+  ui.fTwinCopy.hidden = !twin || twin.same;
+  if (twin) {
+    ui.fTwinText.textContent = twin.same
+      ? `${twin.spot.name} is already on the ${CAT_LABEL[twin.cat]} wheel.`
+      : `${twin.spot.name} is on the ${CAT_LABEL[twin.cat]} wheel too.`;
+  }
+}
+
+// A deal's days and hours only make sense together, and with the deal itself.
+function checkDeal() {
+  const days = $$('input[name="day"]:checked', ui.spotForm).length;
+  const from = ui.fFrom.value;
+  const to = ui.fTo.value;
+  const off = $(".only-drinks", ui.spotForm).disabled;
+  ui.fDeal.setCustomValidity(!off && !ui.fDeal.value.trim() && (days || from) ? "Say what the deal is, like “$1 oysters”." : "");
+  ui.fFrom.setCustomValidity(!off && days && !from ? "Pick when the deal starts." : "");
+  $('input[name="day"]', ui.spotForm).setCustomValidity(!off && from && !days ? "Pick the days the deal runs." : "");
+  ui.fTo.setCustomValidity(!off && from && to !== "close" && Number(to) <= Number(from) ? "The deal has to end after it starts." : "");
+}
+
+function openForm({ spot = null, name = "" } = {}) {
+  const cat = drawerCat;
+  form = {
+    cat,
+    id: spot ? spot.id : null,
+    opener: document.activeElement,
+    scroll: ui.drawer.scrollTop,
+    start: spot ? snapshot(spot.name, detailsOf(spot, cat)) : null,
+  };
+  fieldsFor(cat);
+  fillForm(spot, cat);
+  if (!spot) ui.fName.value = name.trim();
+  const also = spot && cat !== "lunch" ? DRINKS.filter((c) => c !== cat && (doc.spots[c] || []).some((s) => s.id === spot.id)) : [];
+  ui.formIntro.textContent = !spot
+    ? "Only the name is required."
+    : also.length
+      ? `This place is on the ${also.map((c) => CAT_LABEL[c]).join(" and ")} wheel too. Saving updates both.`
+      : "";
+  ui.formIntro.hidden = !ui.formIntro.textContent;
+  ui.fVibe.placeholder = cat === "lunch" ? "One line, like “Huge burritos and a fast line”" : "One line, like “Divey, with a great jukebox”";
+  ui.drawerTitle.textContent = spot ? "Edit details" : `Add to ${CAT_LABEL[cat]}`;
+  ui.formSubmit.textContent = spot ? "Save changes" : "Add spot";
+  ui.listView.hidden = true;
+  ui.spotForm.hidden = false;
+  ui.drawerBack.hidden = false;
+  ui.drawer.classList.add("is-form");
+  formHelpers();
+  checkDeal();
+  ui.drawer.scrollTop = 0;
+  $(".form-body", ui.spotForm).scrollTop = 0;
+  (spot ? ui.drawerTitle : name.trim() ? ui.fVibe : ui.fName).focus({ preventScroll: true });
+}
+
+function showList() {
+  form = null;
+  ui.spotForm.hidden = true;
+  ui.listView.hidden = false;
+  ui.drawerBack.hidden = true;
+  ui.drawer.classList.remove("is-form");
+  ui.drawerTitle.textContent = "Edit the wheel";
+}
+
+function closeForm({ focusId = null } = {}) {
+  if (!form) return;
+  const { opener, scroll, id } = form;
+  showList();
+  renderDrawer();
+  ui.drawer.scrollTop = scroll;
+  const rowId = focusId || id;
+  const row = rowId && $(`.spot-edit[data-id="${CSS.escape(rowId)}"]`, ui.spotList);
+  const target = row || (opener && opener.isConnected && ui.listView.contains(opener) ? opener : ui.addName);
+  target.focus();
+}
+
+function editSpot(cat, id) {
+  if (!(doc.spots[cat] || []).some((s) => s.id === id)) return toast("That spot isn't on the wheel anymore.");
+  if (ui.drawer.hidden || !ui.drawer.classList.contains("is-open")) {
+    openDrawer();
+    if (ui.drawer.hidden) return;
+  }
+  drawerCat = cat;
+  renderDrawer();
+  openForm({ spot: doc.spots[cat].find((s) => s.id === id) });
+}
+
+ui.fFrom.append(...STARTS.map((h) => option(String(h), clock(h))));
+ui.fTo.append(...ENDS.map((h) => option(String(h), clock(h))));
+ui.drawerBack.addEventListener("click", () => closeForm());
+ui.formCancel.addEventListener("click", () => closeForm());
+ui.fName.addEventListener("input", formHelpers);
+ui.spotForm.addEventListener("input", checkDeal);
+ui.spotForm.addEventListener("change", checkDeal);
+
+// A second tap on a picked price or style clears it.
+ui.spotForm.addEventListener("pointerdown", (e) => {
+  if (e.target.type === "radio") e.target.dataset.was = String(e.target.checked);
+});
+ui.spotForm.addEventListener("click", (e) => {
+  const r = e.target;
+  if (r.type !== "radio") return;
+  if (r.dataset.was === "true") r.checked = false;
+  r.dataset.was = "";
+});
+ui.spotForm.addEventListener("keydown", (e) => {
+  if (e.key === " " && e.target.type === "radio" && e.target.checked) {
+    e.preventDefault();
+    e.target.checked = false;
+  }
+});
+
+ui.fTwinCopy.addEventListener("click", () => {
+  const twin = twinOf(ui.fName.value);
+  if (!twin || twin.same) return;
+  const d = detailsOf(twin.spot, form.cat);
+  const fill = (el, value) => {
+    if (value != null && value !== "" && !el.value.trim()) el.value = value;
+  };
+  fill(ui.fShort, d.short && d.short !== autoShort(ui.fName.value.trim()) ? d.short : "");
+  fill(ui.fVibe, d.vibe);
+  fill(ui.fAddress, d.address);
+  fill(ui.fWalk, d.walk);
+  fill(ui.fRating, d.rating != null ? d.rating.toFixed(1) : "");
+  if (d.price && !checkedValue("price")) setChecked("price", d.price);
+  if (d.style && !checkedValue("style")) setChecked("style", d.style);
+  fill(ui.fDeal, d.deal);
+  if (d.when && !$$('input[name="day"]:checked', ui.spotForm).length && !ui.fFrom.value) {
+    $$('input[name="day"]', ui.spotForm).forEach((i) => (i.checked = d.when.days.includes(Number(i.value))));
+    setSelect(ui.fFrom, String(d.when.from));
+    setSelect(ui.fTo, d.when.to != null ? String(d.when.to) : "close");
+  }
+  fill(ui.fHeads, d.heads);
+  fill(ui.fUrl, d.url);
+  checkDeal();
+  ui.fTwin.hidden = true;
+  toast(`Copied the details from ${CAT_LABEL[twin.cat]}.`);
+});
+
+ui.spotForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!form) return;
+  checkDeal();
+  if (!ui.spotForm.reportValidity()) return;
+  const spot = readForm();
+  const { cat, id } = form;
+  if (id && snapshot(spot.name, cleanDetails(spot, cat)) === form.start) {
+    closeForm({ focusId: id });
+    toast("Nothing changed.");
+    return;
+  }
+  ui.formSubmit.disabled = true;
+  const res = await change(id ? { op: "update", cat, id, spot } : { op: "add", cat, spot });
+  ui.formSubmit.disabled = false;
+  if (!res) return;
+  if (!id) ui.addName.value = "";
+  closeForm({ focusId: res.spot && res.spot.id });
+  toast(res.message);
+});
+
 ui.drawer.addEventListener("keydown", (e) => {
   if (e.key !== "Tab") return;
-  const focusable = $$('button:not([disabled]), input, a[href], summary, [tabindex="0"]', ui.drawer).filter(
-    (n) => n.offsetParent !== null || n === document.activeElement
-  );
+  const focusable = $$(
+    'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], summary, [tabindex="0"]',
+    ui.drawer
+  ).filter((n) => n.offsetParent !== null || n === document.activeElement);
   if (!focusable.length) return;
   const first = focusable[0];
   const last = focusable[focusable.length - 1];
@@ -972,7 +1288,8 @@ const pressable = (n) => n && /^(BUTTON|A|SUMMARY)$/.test(n.tagName);
 document.addEventListener("keydown", (e) => {
   const drawerOpen = ui.drawer.classList.contains("is-open");
   if (e.key === "Escape") {
-    if (drawerOpen) closeDrawer();
+    if (drawerOpen && form) closeForm();
+    else if (drawerOpen) closeDrawer();
     else if (!ui.result.hidden) closeResult();
     return;
   }

@@ -13,11 +13,11 @@
 //   rating   Yelp rating
 //   vibe     one line about the place
 //   heads    a heads-up worth knowing before you go
-//   deal     the deal, in words
+//   deal     what the deal is, in words. The days and hours come from `when`.
 //   when     when the deal runs, so the card can say if it's on today:
 //            days are 0 = Sunday ... 6 = Saturday, hours are 24h (15.5 = 3:30pm)
 //   unsure   true when sources disagree about the deal
-//   price    "$", "$$" or "$$$" (lunch)
+//   price    "$" to "$$$$" (lunch)
 //   style    "counter", "sit-down" or "food hall" (lunch)
 //   url      website
 
@@ -35,7 +35,7 @@ const PROVISIONS = {
   walk: 8,
   rating: 3.9,
   vibe: "Polished Long Wharf tavern with a raw bar and a big, buzzy bar.",
-  deal: "$1 Wellfleet oysters, Mon–Thu 3–5pm",
+  deal: "$1 Wellfleet oysters",
   when: { days: [1, 2, 3, 4], from: 15, to: 17 },
   url: "https://www.statestreetprovisions.com/",
 };
@@ -177,7 +177,7 @@ export const SPOTS = {
       rating: 3.8,
       vibe: "1920s speakeasy back room with pool tables and weekend jazz.",
       heads: "No reservations. The speakeasy opens at 4pm.",
-      deal: "$1 oysters, Tue–Thu 4–7pm",
+      deal: "$1 oysters",
       when: { days: [2, 3, 4], from: 16, to: 19 },
       unsure: true,
       url: "http://www.carrienationcocktailclub.com/",
@@ -257,7 +257,7 @@ export const SPOTS = {
       walk: 7,
       rating: 4.3,
       vibe: "Posh chophouse bar on the mezzanine of Winthrop Center.",
-      deal: "$1 oysters at the bar, Mon–Fri 3–6pm",
+      deal: "$1 oysters at the bar",
       when: { days: WEEKDAYS, from: 15, to: 18 },
       url: "https://www.vermilion-club.com/",
     },
@@ -269,7 +269,7 @@ export const SPOTS = {
       walk: 6,
       rating: 3.6,
       vibe: "Big, friendly Downtown Crossing bar and grill.",
-      deal: "$1 oysters, Mondays and Fridays 4–7pm",
+      deal: "$1 oysters",
       when: { days: [1, 5], from: 16, to: 19 },
       url: "https://www.themerchantboston.com/",
     },
@@ -281,7 +281,7 @@ export const SPOTS = {
       walk: 6,
       rating: 4.4,
       vibe: "Sleek hotel raw bar a few blocks from the office.",
-      deal: "$1 oysters at the bar, Thu–Sat 2–5pm",
+      deal: "$1 oysters at the bar",
       when: { days: [4, 5, 6], from: 14, to: 17 },
       heads: "The deal ends at 5pm, so leave early.",
       url: "https://www.thedagnyboston.com/dine/fin-point-oyster-bar-grille/",
@@ -294,7 +294,7 @@ export const SPOTS = {
       walk: 7,
       rating: 4.2,
       vibe: "Hotel bar on the edge of the Common.",
-      deal: "$1 oysters Thursdays from 5pm, $25 minimum per check",
+      deal: "$1 oysters, with a $25 minimum per check",
       when: { days: [4], from: 17, to: null },
       heads: "Worth a call to confirm the Thursday deal.",
       url: "https://thebosworthboston.com/happenings",
@@ -307,7 +307,7 @@ export const SPOTS = {
       walk: 20,
       rating: 3.7,
       vibe: "Legal's horseshoe bar, with a real happy hour every day.",
-      deal: "$1 oysters at the bar, daily 2–6pm",
+      deal: "$1 oysters at the bar",
       when: { days: EVERY_DAY, from: 14, to: 18 },
       heads: "About 20 minutes on foot. Bar seats only for the deal.",
       url: "https://www.legalseafoods.com/locations/boston-park-square/",
@@ -320,7 +320,7 @@ export const SPOTS = {
       walk: 26,
       rating: 4.1,
       vibe: "Charlestown tavern pouring since 1780. Worth the trip.",
-      deal: "$1 oysters, Mon–Fri 3–6pm",
+      deal: "$1 oysters",
       when: { days: WEEKDAYS, from: 15, to: 18 },
       heads: "Take the Orange Line 3 stops from State to Community College.",
       url: "https://www.warrentavern.com/",

@@ -121,6 +121,7 @@
         <div class="deal-body">
           <p class="deal-status" data-state="off" hidden><span class="deal-dot" aria-hidden="true"></span><span class="deal-status-text"></span></p>
           <p class="deal-text"></p>
+          <p class="deal-when"></p>
           <p class="deal-checked"></p>
         </div>
       </div>
@@ -216,39 +217,139 @@
 <div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
 <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" hidden>
   <header class="drawer-head">
-    <h2 class="drawer-title" id="drawerTitle">Edit the wheel</h2>
+    <button class="icon-btn drawer-back" id="drawerBack" type="button" aria-label="Back to the list" hidden>
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12 4l-6 6 6 6"/></svg>
+    </button>
+    <h2 class="drawer-title" id="drawerTitle" tabindex="-1">Edit the wheel</h2>
     <button class="icon-btn" id="drawerClose" type="button" aria-label="Close">
       <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>
     </button>
   </header>
   <p class="sync-note" id="syncNote" data-state="loading"><span class="sync-dot" aria-hidden="true"></span><span class="sync-text">Loading the shared list…</span></p>
 
-  <div class="drawer-tabs" id="drawerTabs" role="tablist" aria-label="Which wheel">
-    <button type="button" role="tab" data-cat="comfort" aria-controls="spotList"><span class="tab-dot" aria-hidden="true"></span>Comfort <span class="tab-count"></span></button>
-    <button type="button" role="tab" data-cat="adventure" aria-controls="spotList"><span class="tab-dot" aria-hidden="true"></span>Adventure <span class="tab-count"></span></button>
-    <button type="button" role="tab" data-cat="oysters" aria-controls="spotList"><span class="tab-dot" aria-hidden="true"></span>Oysters <span class="tab-count"></span></button>
-    <button type="button" role="tab" data-cat="lunch" aria-controls="spotList"><span class="tab-dot" aria-hidden="true"></span>Lunch <span class="tab-count"></span></button>
+  <div class="drawer-list" id="listView">
+    <div class="drawer-tabs" id="drawerTabs" role="tablist" aria-label="Which wheel">
+      <button type="button" role="tab" data-cat="comfort" aria-controls="spotList"><span class="tab-dot" aria-hidden="true"></span>Comfort <span class="tab-count"></span></button>
+      <button type="button" role="tab" data-cat="adventure" aria-controls="spotList"><span class="tab-dot" aria-hidden="true"></span>Adventure <span class="tab-count"></span></button>
+      <button type="button" role="tab" data-cat="oysters" aria-controls="spotList"><span class="tab-dot" aria-hidden="true"></span>Oysters <span class="tab-count"></span></button>
+      <button type="button" role="tab" data-cat="lunch" aria-controls="spotList"><span class="tab-dot" aria-hidden="true"></span>Lunch <span class="tab-count"></span></button>
+    </div>
+
+    <form class="add-form" id="addForm" autocomplete="off">
+      <label class="sr-only" for="addName">Spot name</label>
+      <input class="field" id="addName" name="name" maxlength="40" placeholder="Add a spot" enterkeyhint="done" required>
+      <button class="btn btn-accent add-btn" type="submit">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        <span>Add</span>
+      </button>
+      <button class="link-btn add-more" id="addMore" type="button">Add with address, rating and more</button>
+    </form>
+
+    <ul class="spot-list" id="spotList" aria-label="Spots on this wheel"></ul>
+
+    <details class="removed" id="removedBox" hidden>
+      <summary>Recently removed (<span id="removedCount">0</span>)</summary>
+      <ul class="removed-list" id="removedList"></ul>
+    </details>
+
+    <div class="reset-area" id="resetArea"></div>
   </div>
 
-  <form class="add-form" id="addForm" autocomplete="off">
-    <label class="sr-only" for="addName">Spot name</label>
-    <input class="field" id="addName" name="name" maxlength="40" placeholder="Add a spot" enterkeyhint="done" required>
-    <label class="sr-only" for="addNote">Note, optional</label>
-    <input class="field field-note" id="addNote" name="note" maxlength="90" placeholder="Note, like “$1 oysters Tue 4–6” (optional)" enterkeyhint="done">
-    <button class="btn btn-accent add-btn" type="submit">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-      <span>Add</span>
-    </button>
+  <form class="spot-form" id="spotForm" autocomplete="off" hidden>
+    <div class="form-body">
+      <p class="form-intro" id="formIntro">Only the name is required.</p>
+
+      <div class="form-row">
+        <label class="form-label" for="fName">Name</label>
+        <input class="field" id="fName" maxlength="40" required autocapitalize="words">
+        <p class="form-hint" id="fTwin" hidden><span id="fTwinText"></span> <button class="link-btn" id="fTwinCopy" type="button">Copy its details</button></p>
+        <p class="form-hint" id="fLookup" hidden>Find the address and walk time on <a id="fMaps" href="#" target="_blank" rel="noopener noreferrer">Google Maps</a>, and the rating on <a id="fYelp" href="#" target="_blank" rel="noopener noreferrer">Yelp</a>.</p>
+      </div>
+
+      <div class="form-row">
+        <label class="form-label" for="fShort">Name on the wheel</label>
+        <input class="field" id="fShort" maxlength="20" autocapitalize="words" placeholder="Leave blank to use the name">
+      </div>
+
+      <div class="form-row">
+        <label class="form-label" for="fVibe">Vibe</label>
+        <textarea class="field field-area" id="fVibe" maxlength="90" rows="2"></textarea>
+      </div>
+
+      <div class="form-pair">
+        <div class="form-row">
+          <label class="form-label" for="fAddress">Address</label>
+          <input class="field" id="fAddress" maxlength="60" placeholder="Street address" autocapitalize="words">
+        </div>
+        <div class="form-row">
+          <label class="form-label" for="fWalk">Walk</label>
+          <span class="field-unit"><input class="field" id="fWalk" type="number" inputmode="numeric" min="1" max="90" step="1"><span aria-hidden="true">min</span></span>
+        </div>
+      </div>
+
+      <div class="form-row form-rating">
+        <label class="form-label" for="fRating">Yelp rating</label>
+        <span class="field-unit"><input class="field" id="fRating" type="number" inputmode="decimal" min="1" max="5" step="0.1"><span aria-hidden="true">★</span></span>
+      </div>
+
+      <fieldset class="form-set only-lunch">
+        <legend class="form-label">Price</legend>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="price" value="$"><span>$</span></label>
+          <label class="choice"><input type="radio" name="price" value="$$"><span>$$</span></label>
+          <label class="choice"><input type="radio" name="price" value="$$$"><span>$$$</span></label>
+          <label class="choice"><input type="radio" name="price" value="$$$$"><span>$$$$</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="form-set only-lunch">
+        <legend class="form-label">Kind of place</legend>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="style" value="counter"><span>Grab and go</span></label>
+          <label class="choice"><input type="radio" name="style" value="sit-down"><span>Sit-down</span></label>
+          <label class="choice"><input type="radio" name="style" value="food hall"><span>Food hall</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="form-set only-drinks">
+        <legend class="form-label">Deal</legend>
+        <label class="sr-only" for="fDeal">What the deal is</label>
+        <input class="field" id="fDeal" maxlength="70" placeholder="What it is, like “$1 oysters”">
+        <div class="days" role="group" aria-label="Days the deal runs">
+          <label class="choice"><input type="checkbox" name="day" value="1" aria-label="Monday"><span>Mon</span></label>
+          <label class="choice"><input type="checkbox" name="day" value="2" aria-label="Tuesday"><span>Tue</span></label>
+          <label class="choice"><input type="checkbox" name="day" value="3" aria-label="Wednesday"><span>Wed</span></label>
+          <label class="choice"><input type="checkbox" name="day" value="4" aria-label="Thursday"><span>Thu</span></label>
+          <label class="choice"><input type="checkbox" name="day" value="5" aria-label="Friday"><span>Fri</span></label>
+          <label class="choice"><input type="checkbox" name="day" value="6" aria-label="Saturday"><span>Sat</span></label>
+          <label class="choice"><input type="checkbox" name="day" value="0" aria-label="Sunday"><span>Sun</span></label>
+        </div>
+        <div class="hours">
+          <label class="sr-only" for="fFrom">Deal starts</label>
+          <span class="select"><select class="field" id="fFrom"><option value="">Start time</option></select></span>
+          <span class="hours-to" aria-hidden="true">to</span>
+          <label class="sr-only" for="fTo">Deal ends</label>
+          <span class="select"><select class="field" id="fTo"><option value="close">Closing</option></select></span>
+        </div>
+        <p class="form-hint">With days and hours, the card says if the deal is on right now.</p>
+      </fieldset>
+
+      <div class="form-row">
+        <label class="form-label" for="fHeads">Good to know</label>
+        <textarea class="field field-area" id="fHeads" maxlength="120" rows="2" placeholder="Like “Cash only” or “Closed Mondays”"></textarea>
+      </div>
+
+      <div class="form-row">
+        <label class="form-label" for="fUrl">Website</label>
+        <input class="field" id="fUrl" maxlength="200" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Web address">
+      </div>
+    </div>
+
+    <div class="form-foot">
+      <button class="btn btn-accent" id="formSubmit" type="submit">Add spot</button>
+      <button class="btn btn-ghost" id="formCancel" type="button">Cancel</button>
+    </div>
   </form>
-
-  <ul class="spot-list" id="spotList" aria-label="Spots on this wheel"></ul>
-
-  <details class="removed" id="removedBox" hidden>
-    <summary>Recently removed (<span id="removedCount">0</span>)</summary>
-    <ul class="removed-list" id="removedList"></ul>
-  </details>
-
-  <div class="reset-area" id="resetArea"></div>
 </aside>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>

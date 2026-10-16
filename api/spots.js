@@ -6,7 +6,7 @@
 import { applyOp, normalizeDoc, seedDoc, view } from "../data/ops.js";
 
 const KEY = "wheel/spots.json";
-const MAX_BODY = 2000;
+const MAX_BODY = 4000;
 // Page loads reuse a recent read for a few seconds, so they rarely touch storage.
 const CACHE_MS = 20000;
 let cached = null;
