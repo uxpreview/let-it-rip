@@ -79,3 +79,10 @@ Happy-hour deals change often; the card says when a deal was checked.
 Closed in 2024 to 2026, so don't add them back: Hennessy's, Clarke's at Faneuil
 Hall, The Times Irish Pub, Daiquiris & Daisies, Scholars, Silvertone, Boston
 Chops Downtown Crossing, and Cheers Faneuil Hall.
+
+Lunch: Zo is Zo Greek at 92 State St (the Center Plaza Zo closed), Falafel King
+is the 260 Washington St shop, and Tatte is the One Boston Place cafe at 201
+Washington St. Many downtown lunch spots are weekday-only and close by 2 or 3pm;
+the result card says so. Closed or moved, so don't add them back: Sultan's
+Kitchen, Durgin-Park, Fóumami, Sakurabana, Clover on School St, and Wheelhouse
+on Broad St (it's now a stall in High Street Place).

@@ -117,6 +117,8 @@ let result = null;
 let staleWheel = false;
 let drawerCat = tab === "lunch" ? "lunch" : mode === "all" ? "comfort" : mode;
 let lastFocus = null;
+let lastWrite = 0;
+let lastFetch = 0;
 
 // ---------- vetoes (this device, until 5am Boston time) ----------
 
@@ -624,13 +626,16 @@ function setDoc(next, { fromServer = false } = {}) {
 }
 
 async function loadShared() {
+  lastFetch = Date.now();
   try {
     const res = await fetch("/api/spots", { cache: "no-store", headers: { accept: "application/json" } });
     const data = await res.json();
     if (!res.ok) throw new Error(data && data.message);
     if (data.shared) {
       shared = true;
-      setDoc(data, { fromServer: true });
+      // Right after a save, another server copy can still be a few seconds behind. Keep the newer list.
+      const behind = (Number(data.rev) || 0) < (Number(doc.rev) || 0) && Date.now() - lastWrite < 30000;
+      if (!behind) setDoc(data, { fromServer: true });
     } else {
       shared = false;
       setDoc(store.get(KEY.local) || seedDoc());
@@ -671,6 +676,7 @@ async function change(op) {
       if (res.status === 409 || res.status === 404) loadShared();
       return null;
     }
+    lastWrite = Date.now();
     setDoc(data, { fromServer: true });
     return { ...local, spot: data.spot || local.spot };
   } catch {
@@ -681,7 +687,7 @@ async function change(op) {
 }
 
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible" && shared !== false) loadShared();
+  if (document.visibilityState === "visible" && shared !== false && Date.now() - lastFetch > 30000) loadShared();
 });
 
 // ---------- edit drawer ----------
