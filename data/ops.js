@@ -2,8 +2,9 @@
 // page itself when the shared list isn't available (edits then stay on the device).
 import { SPOTS } from "./spots.js";
 
-export const CATS = ["comfort", "adventure", "oysters"];
-export const CAT_LABEL = { comfort: "Comfort", adventure: "Adventure", oysters: "Oysters" };
+export const DRINKS = ["comfort", "adventure", "oysters"];
+export const CATS = [...DRINKS, "lunch"];
+export const CAT_LABEL = { comfort: "Comfort", adventure: "Adventure", oysters: "Oysters", lunch: "Lunch" };
 export const LIMITS = { name: 40, note: 90, perWheel: 40, minPerWheel: 2, removed: 24 };
 
 const clone = (x) => JSON.parse(JSON.stringify(x));

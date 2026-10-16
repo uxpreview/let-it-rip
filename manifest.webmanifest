@@ -1,7 +1,7 @@
 {
-  "name": "After-Work Wheel",
+  "name": "The Wheel",
   "short_name": "Wheel",
-  "description": "Spin for tonight's after-work spot near 31 State St, Boston.",
+  "description": "Spin for lunch or after-work drinks near 31 State St, Boston.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0b0c14",

@@ -1,7 +1,7 @@
 // Checks the shared-list rules and the starting data. No network, no browser.
 //   npm test
 import assert from "node:assert/strict";
-import { CATS, LIMITS, applyOp, nameKey, normalizeDoc, seedDoc, view } from "../data/ops.js";
+import { CATS, DRINKS, LIMITS, applyOp, nameKey, normalizeDoc, seedDoc, view } from "../data/ops.js";
 import { SPOTS } from "../data/spots.js";
 
 let passed = 0;
@@ -26,6 +26,8 @@ test("starting data is complete and tidy", () => {
       assert.ok(!names.has(nameKey(s.name)), `${s.name} is listed twice in ${cat}`);
       names.add(nameKey(s.name));
       for (const text of [s.vibe, s.heads, s.deal].filter(Boolean)) assert.ok(!text.includes("—"), `em dash in ${s.id}`);
+      if (s.price != null) assert.match(s.price, /^\${1,3}$/, `${s.id} has a bad price`);
+      if (s.style != null) assert.ok(["counter", "sit-down", "food hall"].includes(s.style), `${s.id} has a bad style`);
       if (s.when) {
         assert.ok(s.deal, `${s.id} has deal hours but no deal`);
         assert.ok(s.when.days.every((d) => d >= 0 && d <= 6), `${s.id} has a bad day`);
@@ -38,6 +40,17 @@ test("starting data is complete and tidy", () => {
     if (byId.has(s.id)) assert.deepEqual(byId.get(s.id), s, `${s.id} differs between wheels`);
     byId.set(s.id, s);
   }
+});
+
+test("lunch is its own wheel and old saved lists gain it", () => {
+  assert.ok(CATS.includes("lunch") && !DRINKS.includes("lunch"));
+  const old = { rev: 3, spots: { comfort: SPOTS.comfort.slice(0, 3) }, removed: [] };
+  const doc = normalizeDoc(old);
+  assert.equal(doc.spots.comfort.length, 3);
+  assert.deepEqual(doc.spots.lunch.map((s) => s.id), SPOTS.lunch.map((s) => s.id));
+  const added = applyOp(doc, { op: "add", cat: "lunch", name: "Gene's Flatbread" });
+  assert.ok(!added.error);
+  assert.ok(added.doc.spots.lunch.some((s) => s.name === "Gene's Flatbread"));
 });
 
 test("add, refuse a duplicate, remove, restore", () => {

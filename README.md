@@ -1,14 +1,18 @@
-# Let it rip: the after-work wheel
+# The Wheel: lunch and after-work drinks
 
-A spin-the-wheel page that picks where the office goes after work, starting
-from 31 State St, Boston. Live at **https://wheel.uxpreview.com**. No password,
+A spin-the-wheel page that picks where the office goes for lunch or for drinks
+after work, starting from 31 State St, Boston. Live at **https://wheel.uxpreview.com**. No password,
 on purpose. It's kept out of search engines (`noindex`), but anyone with the
 link can open it and edit the spots.
 
 ## What it does
 
-- **Four wheels:** Let it rip (every spot), Comfort (familiar bars), Adventure
-  (outside our comfort zone) and Oysters (mostly dollar oysters).
+- **Lunch and Drinks tabs.** Lunch is one wheel of weekday lunch spots, shown in
+  a daytime look. Drinks has four wheels: Let it rip (every bar), Comfort
+  (familiar bars), Adventure (outside our comfort zone) and Oysters (mostly
+  dollar oysters), shown at night. The page opens on Lunch from 10am to 3pm
+  Boston time and on Drinks otherwise. Links can pick a tab:
+  `wheel.uxpreview.com/#lunch` or `#drinks`.
 - **Spin** with the button, the SPIN hub, the Space bar, or by grabbing the
   wheel and flicking it. It ticks, the pointer flaps, the lights chase, and
   confetti fires when it lands. Sound can be turned off with the speaker button.
@@ -28,6 +32,8 @@ link can open it and edit the spots.
 |---|---|
 | The starting spots, their details and deals | `data/spots.js` |
 | Wheel names, taglines, slice colors, confetti, result-card phrases | top of `assets/app.js` (`MODES`, `TONES`, `CONFETTI`, `KICKERS`) |
+| Day (Lunch) and night (Drinks) colors | `:root` and `:root[data-tab="lunch"]` at the top of `assets/app.css` |
+| When the page opens on Lunch | `assets/boot.js` |
 | Look and layout | `assets/app.css` |
 | How the spin feels (speed, length, flick sensitivity) | `spin()` and `release` in `assets/wheel.js` |
 | Sounds | `assets/sound.js` |
@@ -73,3 +79,10 @@ Happy-hour deals change often; the card says when a deal was checked.
 Closed in 2024 to 2026, so don't add them back: Hennessy's, Clarke's at Faneuil
 Hall, The Times Irish Pub, Daiquiris & Daisies, Scholars, Silvertone, Boston
 Chops Downtown Crossing, and Cheers Faneuil Hall.
+
+Lunch: Zo is Zo Greek at 92 State St (the Center Plaza Zo closed), Falafel King
+is the 260 Washington St shop, and Tatte is the One Boston Place cafe at 201
+Washington St. Many downtown lunch spots are weekday-only and close by 2 or 3pm;
+the result card says so. Closed or moved, so don't add them back: Sultan's
+Kitchen, Durgin-Park, Fóumami, Sakurabana, Clover on School St, and Wheelhouse
+on Broad St (it's now a stall in High Street Place).
